@@ -15,8 +15,9 @@ export const maxDuration = 300;
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  ctx: { params: Promise<{ slug: string }> }
 ) {
+  const params = await ctx.params;
   const { event, authorized } = await requireEventAdmin(req, params.slug);
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!authorized) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

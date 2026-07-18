@@ -12,8 +12,9 @@ export const dynamic = "force-dynamic";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
+  const params = await ctx.params;
   const media = await prisma.media.findUnique({
     where: { id: params.id },
     include: { event: { select: { id: true, adminToken: true } } },

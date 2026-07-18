@@ -4,7 +4,8 @@ import GuestApp from "@/components/GuestApp";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuestPage({ params }: { params: { slug: string } }) {
+export default async function GuestPage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsPromise;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: {

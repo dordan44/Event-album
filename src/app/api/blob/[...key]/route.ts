@@ -17,8 +17,9 @@ function keyOf(params: { key: string[] }): string {
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { key: string[] } }
+  ctx: { params: Promise<{ key: string[] }> }
 ) {
+  const params = await ctx.params;
   if (r2Configured())
     return NextResponse.json({ error: "Direct upload disabled — use R2 presigned URLs" }, { status: 400 });
 
@@ -39,8 +40,9 @@ export async function PUT(
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { key: string[] } }
+  ctx: { params: Promise<{ key: string[] }> }
 ) {
+  const params = await ctx.params;
   try {
     const storageKey = keyOf(params);
     const data = await readLocal(storageKey);

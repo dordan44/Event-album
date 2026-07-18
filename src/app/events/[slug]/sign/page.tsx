@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 /** Print-ready A5 table sign: open in browser → Cmd/Ctrl+P → done. */
-export default async function SignPage({ params }: { params: { slug: string } }) {
+export default async function SignPage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsPromise;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: { slug: true, name: true },

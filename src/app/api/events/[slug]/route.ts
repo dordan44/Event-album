@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 /** GET /api/events/[slug] — public event metadata for the guest app. */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { slug: string } }
+  ctx: { params: Promise<{ slug: string }> }
 ) {
+  const params = await ctx.params;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: {

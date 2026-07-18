@@ -13,8 +13,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  ctx: { params: Promise<{ slug: string }> }
 ) {
+  const params = await ctx.params;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: { id: true, paymentStatus: true },
@@ -66,8 +67,9 @@ export async function POST(
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  ctx: { params: Promise<{ slug: string }> }
 ) {
+  const params = await ctx.params;
   const statusParam = req.nextUrl.searchParams.get("status");
   const status =
     statusParam && (Object.values(MediaStatus) as string[]).includes(statusParam)

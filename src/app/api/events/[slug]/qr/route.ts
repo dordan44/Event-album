@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  ctx: { params: Promise<{ slug: string }> }
 ) {
+  const params = await ctx.params;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: { slug: true },

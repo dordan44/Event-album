@@ -4,13 +4,11 @@ import AdminDashboard from "@/components/AdminDashboard";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams: { key?: string };
+export default async function AdminPage(props: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ key?: string }>;
 }) {
+  const [params, searchParams] = await Promise.all([props.params, props.searchParams]);
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: { id: true, slug: true, name: true, adminToken: true, googleRefreshToken: true },

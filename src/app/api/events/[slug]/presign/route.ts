@@ -25,8 +25,9 @@ const ALLOWED_TYPES = new Set([
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  ctx: { params: Promise<{ slug: string }> }
 ) {
+  const params = await ctx.params;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: { id: true, paymentStatus: true, packageType: true },

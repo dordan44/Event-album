@@ -4,7 +4,8 @@ import Slideshow from "@/components/Slideshow";
 
 export const dynamic = "force-dynamic";
 
-export default async function SlideshowPage({ params }: { params: { slug: string } }) {
+export default async function SlideshowPage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+  const params = await paramsPromise;
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     select: { id: true, slug: true, packageType: true, paymentStatus: true },

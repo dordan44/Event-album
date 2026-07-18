@@ -63,11 +63,14 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const isVideo = file.type.startsWith("video/");
       setUploads((u) => [{ id, name: file.name, state: "compressing" }, ...u]);
-      uploadOne(id, file, isVideo).catch((err) =>
+      uploadOne(id, file, isVideo).catch((err) => {
+        // TypeError = browser network failure ("Load failed" / "Failed to
+        // fetch") — never show that raw string to guests.
+        const msg = err instanceof TypeError ? t("guest.errUpload") : String(err?.message ?? err);
         setUploads((u) =>
-          u.map((it) => (it.id === id ? { ...it, state: "error", error: String(err.message ?? err) } : it))
-        )
-      );
+          u.map((it) => (it.id === id ? { ...it, state: "error", error: msg } : it))
+        );
+      });
     }
     if (fileInput.current) fileInput.current.value = "";
   }
@@ -100,11 +103,18 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
     if (!presignRes.ok) throw new Error(presign.error ?? t("guest.errUpload"));
 
     // 2. Upload straight to R2 (or the local dev endpoint).
-    const putRes = await fetch(presign.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": contentType },
-      body: blob,
-    });
+    // fetch() rejects with a raw browser string ("Load failed" on Safari)
+    // on network/CORS errors — translate it to our friendly message.
+    let putRes: Response;
+    try {
+      putRes = await fetch(presign.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: blob,
+      });
+    } catch {
+      throw new Error(t("guest.errUpload"));
+    }
     if (!putRes.ok) throw new Error(t("guest.errUpload"));
 
     // 3. Confirm — creates the PENDING media record + real-time admin alert.

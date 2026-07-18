@@ -33,6 +33,11 @@ export default async function SignPage({ params: paramsPromise }: { params: Prom
           <br />
           בלי אפליקציה · בלי הרשמה · התמונות עולות למסך הגדול!
         </p>
+        <p className="mt-3 text-xs leading-relaxed text-neutral-400">
+          Scan with your phone camera · No app, no signup
+          <br />
+          Your photos go up on the big screen!
+        </p>
       </div>
       <p className="no-print fixed bottom-6 right-6 rounded-xl bg-neutral-900 px-5 py-3 text-sm font-bold text-white">
         Press Ctrl/Cmd+P to print

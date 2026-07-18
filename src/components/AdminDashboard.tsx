@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEventSocket } from "@/lib/useEventSocket";
+import { LangToggle, useLang } from "@/lib/i18n";
 
 interface AdminEvent {
   id: string;
@@ -28,6 +29,7 @@ export default function AdminDashboard({
   event: AdminEvent;
   adminKey: string;
 }) {
+  const { t, lang } = useLang();
   const [tab, setTab] = useState<Tab>("moderation");
   const [items, setItems] = useState<MediaItem[]>([]);
   const [filter, setFilter] = useState<"PENDING" | "ALL">("PENDING");
@@ -71,15 +73,15 @@ export default function AdminDashboard({
   }
 
   async function googleSync() {
-    setSyncState("Syncing to Google Drive…");
+    setSyncState(t("admin.syncing"));
     const res = await fetch(`/api/events/${event.slug}/google/sync?key=${adminKey}`, {
       method: "POST",
     });
     const data = await res.json();
     setSyncState(
       res.ok
-        ? `Done — ${data.uploaded} files uploaded. Open: ${data.folderUrl}`
-        : `Sync failed: ${data.error}`
+        ? `${t("admin.syncDone").replace("{n}", String(data.uploaded))} ${data.folderUrl}`
+        : `${t("admin.syncFailed")} ${data.error}`
     );
   }
 
@@ -95,25 +97,28 @@ export default function AdminDashboard({
   return (
     <main className="min-h-screen bg-neutral-50">
       <header className="sticky top-0 z-20 border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">SnapEvent Admin</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
+              {t("admin.brand")}
+            </p>
             <h1 className="font-display text-xl font-bold">{event.name}</h1>
           </div>
           {/* Stats strip */}
-          <div className="flex gap-6 text-center text-sm">
-            <Stat label="Uploaded" value={stats.total} />
-            <Stat label="Approved" value={stats.approved} accent="text-green-600" />
-            <Stat label="Pending" value={stats.pending} accent="text-amber-600" />
-            <Stat label="Guests online" value={guestsOnline} accent="text-brand-600" />
+          <div className="flex items-center gap-6 text-center text-sm">
+            <Stat label={t("admin.uploaded")} value={stats.total} />
+            <Stat label={t("admin.approved")} value={stats.approved} accent="text-green-600" />
+            <Stat label={t("admin.pending")} value={stats.pending} accent="text-amber-600" />
+            <Stat label={t("admin.guestsOnline")} value={guestsOnline} accent="text-brand-600" />
+            <LangToggle />
           </div>
         </div>
         <nav className="mx-auto flex max-w-6xl gap-1 px-6">
           {(
             [
-              ["moderation", "Moderation"],
-              ["assets", "Assets"],
-              ["export", "Export"],
+              ["moderation", t("admin.tabModeration")],
+              ["assets", t("admin.tabAssets")],
+              ["export", t("admin.tabExport")],
             ] as [Tab, string][]
           ).map(([id, label]) => (
             <button
@@ -143,7 +148,7 @@ export default function AdminDashboard({
                 }}
                 className="sticky top-28 z-10 mb-4 w-full animate-fade-in rounded-xl bg-brand-600 py-2 text-sm font-bold text-white shadow-lg"
               >
-                ⚡ {newAlert} new photo{newAlert > 1 ? "s" : ""} just arrived — click to view
+                ⚡ {newAlert} {t("admin.newAlert")}
               </button>
             )}
 
@@ -156,22 +161,22 @@ export default function AdminDashboard({
                     filter === f ? "bg-neutral-900 text-white" : "bg-white text-neutral-600 shadow-sm"
                   }`}
                 >
-                  {f === "PENDING" ? `Awaiting review (${stats.pending})` : `Everything (${stats.total})`}
+                  {f === "PENDING"
+                    ? `${t("admin.filterPending")} (${stats.pending})`
+                    : `${t("admin.filterAll")} (${stats.total})`}
                 </button>
               ))}
             </div>
 
             {visible.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-neutral-300 p-16 text-center text-neutral-400">
-                {filter === "PENDING"
-                  ? "All caught up! New uploads will appear here instantly. ✨"
-                  : "No media yet — get those QR codes on the tables!"}
+                {filter === "PENDING" ? t("admin.emptyPending") : t("admin.emptyAll")}
               </div>
             ) : (
               /* Moderation matrix — masonry via CSS columns */
               <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [&>*]:mb-4">
                 {visible.map((m) => (
-                  <MediaCard key={m.id} media={m} onModerate={moderate} />
+                  <MediaCard key={m.id} media={m} onModerate={moderate} locale={lang} />
                 ))}
               </div>
             )}
@@ -180,10 +185,8 @@ export default function AdminDashboard({
 
         {tab === "assets" && (
           <div className="max-w-xl space-y-6">
-            <h2 className="font-display text-2xl font-bold">Printable table signs</h2>
-            <p className="text-sm text-neutral-600">
-              Print one per table. Guests scan with their native camera — no app needed.
-            </p>
+            <h2 className="font-display text-2xl font-bold">{t("admin.assetsTitle")}</h2>
+            <p className="text-sm text-neutral-600">{t("admin.assetsBody")}</p>
             <img
               src={`/api/events/${event.slug}/qr?size=600`}
               alt="Event QR code"
@@ -195,19 +198,19 @@ export default function AdminDashboard({
                 download={`snapevent-qr-${event.slug}.png`}
                 className="rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-bold text-white"
               >
-                Download QR (print-ready PNG)
+                {t("admin.downloadQr")}
               </a>
               <a
                 href={`/events/${event.slug}/sign`}
                 target="_blank"
                 className="rounded-xl border border-neutral-300 bg-white px-5 py-2.5 text-sm font-bold text-neutral-800"
               >
-                Open printable A5 sign →
+                {t("admin.openSign")} ↗
               </a>
             </div>
             <div className="rounded-xl bg-white p-4 text-sm text-neutral-600 shadow-sm">
-              <p className="font-bold text-neutral-800">Venue screen URL (give this to the DJ/AV):</p>
-              <code className="mt-1 block break-all rounded bg-neutral-100 p-2 text-xs">
+              <p className="font-bold text-neutral-800">{t("admin.venueUrl")}</p>
+              <code dir="ltr" className="mt-1 block break-all rounded bg-neutral-100 p-2 text-start text-xs">
                 {typeof window !== "undefined" ? window.location.origin : ""}/events/{event.slug}/slideshow
               </code>
             </div>
@@ -216,33 +219,33 @@ export default function AdminDashboard({
 
         {tab === "export" && (
           <div className="max-w-xl space-y-6">
-            <h2 className="font-display text-2xl font-bold">Take your memories home</h2>
+            <h2 className="font-display text-2xl font-bold">{t("admin.exportTitle")}</h2>
             <div className="space-y-3">
               <a
                 href={`/api/events/${event.slug}/export?key=${adminKey}`}
                 className="block rounded-xl bg-neutral-900 px-5 py-3 text-center text-sm font-bold text-white"
               >
-                ⬇️ Download ZIP — approved photos ({stats.approved})
+                {t("admin.zipApproved")} ({stats.approved})
               </a>
               <a
                 href={`/api/events/${event.slug}/export?key=${adminKey}&status=ALL`}
                 className="block rounded-xl border border-neutral-300 bg-white px-5 py-3 text-center text-sm font-bold text-neutral-800"
               >
-                Download ZIP — everything ({stats.total})
+                {t("admin.zipAll")} ({stats.total})
               </a>
               {event.googleConnected ? (
                 <button
                   onClick={googleSync}
                   className="block w-full rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-bold text-white"
                 >
-                  ☁️ Sync approved photos to Google Drive
+                  {t("admin.googleSync")}
                 </button>
               ) : (
                 <a
                   href={`/api/events/${event.slug}/google/auth?key=${adminKey}`}
                   className="block rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-bold text-white"
                 >
-                  Connect Google Drive / Photos
+                  {t("admin.googleConnect")}
                 </a>
               )}
               {syncState && (
@@ -268,10 +271,13 @@ function Stat({ label, value, accent = "" }: { label: string; value: number; acc
 function MediaCard({
   media,
   onModerate,
+  locale,
 }: {
   media: MediaItem;
   onModerate: (id: string, action: "APPROVE" | "REJECT") => void;
+  locale: string;
 }) {
+  const { t } = useLang();
   return (
     <div className="break-inside-avoid overflow-hidden rounded-xl bg-white shadow-sm">
       {media.type === "VIDEO" ? (
@@ -282,7 +288,12 @@ function MediaCard({
       <div className="p-3">
         <div className="mb-2 flex items-center justify-between text-xs text-neutral-500">
           <span className="font-medium text-neutral-800">{media.guestName}</span>
-          <span>{new Date(media.createdAt).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</span>
+          <span>
+            {new Date(media.createdAt).toLocaleTimeString(locale === "he" ? "he-IL" : "en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
         </div>
         {media.status === "PENDING" ? (
           <div className="grid grid-cols-2 gap-2">
@@ -290,13 +301,13 @@ function MediaCard({
               onClick={() => onModerate(media.id, "APPROVE")}
               className="rounded-lg bg-green-600 py-2.5 text-sm font-bold text-white transition active:scale-95"
             >
-              ✓ Approve
+              {t("admin.approve")}
             </button>
             <button
               onClick={() => onModerate(media.id, "REJECT")}
               className="rounded-lg bg-red-600 py-2.5 text-sm font-bold text-white transition active:scale-95"
             >
-              ✕ Reject
+              {t("admin.reject")}
             </button>
           </div>
         ) : (
@@ -305,7 +316,7 @@ function MediaCard({
               media.status === "APPROVED" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
             }`}
           >
-            {media.status === "APPROVED" ? "Approved — live on screen" : "Rejected"}
+            {media.status === "APPROVED" ? t("admin.statusApproved") : t("admin.statusRejected")}
           </div>
         )}
       </div>

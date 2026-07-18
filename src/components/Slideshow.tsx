@@ -62,8 +62,9 @@ export default function Slideshow({ eventId, slug }: { eventId: string; slug: st
       ))}
 
       {slides.length === 0 && (
-        <div className="flex h-full flex-col items-center justify-center gap-4 text-neutral-600">
-          <p className="text-2xl">Waiting for the first approved photo…</p>
+        <div className="flex h-full flex-col items-center justify-center gap-3 text-neutral-600">
+          <p dir="rtl" className="text-2xl">ממתינים לתמונה המאושרת הראשונה…</p>
+          <p className="text-lg text-neutral-700">Waiting for the first approved photo…</p>
         </div>
       )}
 
@@ -75,9 +76,14 @@ export default function Slideshow({ eventId, slug }: { eventId: string; slug: st
           alt="QR"
           className="h-14 w-14 rounded-lg bg-white p-1"
         />
-        <p className="text-sm font-medium text-white/80">
-          סרקו את הברקוד שעל השולחן — והתמונה שלכם תעלה לכאן! 📸
-        </p>
+        <div>
+          <p dir="rtl" className="text-sm font-medium text-white/80">
+            סרקו את הברקוד שעל השולחן — והתמונה שלכם תעלה לכאן! 📸
+          </p>
+          <p className="text-xs text-white/50">
+            Scan the QR on your table to see your photo up here!
+          </p>
+        </div>
       </div>
     </main>
   );

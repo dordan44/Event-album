@@ -1,27 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useLang, type MessageKey } from "@/lib/i18n";
 
-const EVENT_TYPES = [
-  ["WEDDING", "Wedding · חתונה"],
-  ["BAR_MITZVAH", "Bar Mitzvah · בר מצווה"],
-  ["BAT_MITZVAH", "Bat Mitzvah · בת מצווה"],
-  ["BRIT", "Brit · ברית"],
-  ["BIRTHDAY", "Birthday · יום הולדת"],
-  ["CORPORATE", "Corporate · אירוע חברה"],
-] as const;
-
+const EVENT_TYPES = ["WEDDING", "BAR_MITZVAH", "BAT_MITZVAH", "BRIT", "BIRTHDAY", "CORPORATE"] as const;
 const PACKAGES = [
-  { id: "BASIC", title: "Basic", price: "₪290", desc: "Shared album + QR signs + ZIP export" },
-  { id: "PREMIUM", title: "Premium", price: "₪490", desc: "Everything in Basic + live venue slideshow + video uploads" },
+  { id: "BASIC", price: "₪290" },
+  { id: "PREMIUM", price: "₪490" },
 ] as const;
-
-const THEMES = [
-  ["classic", "Classic"],
-  ["romance", "Romance"],
-  ["night", "Night"],
-  ["festive", "Festive"],
-] as const;
+const THEMES = ["classic", "romance", "night", "festive"] as const;
 
 interface CreatedEvent {
   slug: string;
@@ -31,6 +18,7 @@ interface CreatedEvent {
 }
 
 export default function CheckoutForm() {
+  const { t } = useLang();
   const [form, setForm] = useState({
     name: "",
     type: "WEDDING",
@@ -55,7 +43,7 @@ export default function CheckoutForm() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
+      if (!res.ok) throw new Error(data.error ?? t("form.error"));
       setCreated(data);
     } catch (err: any) {
       setError(err.message);
@@ -67,16 +55,12 @@ export default function CheckoutForm() {
   if (created) {
     return (
       <div className="animate-slide-up rounded-2xl border border-green-200 bg-green-50 p-8">
-        <h3 className="mb-1 font-display text-2xl font-bold text-green-800">
-          🎉 Your event is live!
-        </h3>
-        <p className="mb-6 text-sm text-green-700">
-          Save these links — the admin link is private, treat it like a password.
-        </p>
+        <h3 className="mb-1 font-display text-2xl font-bold text-green-800">{t("created.title")}</h3>
+        <p className="mb-6 text-sm text-green-700">{t("created.sub")}</p>
         <ul className="space-y-3 text-sm">
-          <LinkRow label="Admin dashboard (private)" href={created.adminUrl} />
-          <LinkRow label="Guest upload page" href={created.guestUrl} />
-          <LinkRow label="Venue slideshow (for the DJ/AV screen)" href={created.slideshowUrl} />
+          <LinkRow label={t("created.admin")} href={created.adminUrl} />
+          <LinkRow label={t("created.guest")} href={created.guestUrl} />
+          <LinkRow label={t("created.slideshow")} href={created.slideshowUrl} />
         </ul>
       </div>
     );
@@ -84,22 +68,24 @@ export default function CheckoutForm() {
 
   return (
     <form onSubmit={submit} className="space-y-5 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-      <Field label="Event type">
+      <Field label={t("form.eventType")}>
         <select
           className={inputCls}
           value={form.type}
           onChange={(e) => setForm({ ...form, type: e.target.value })}
         >
-          {EVENT_TYPES.map(([v, label]) => (
-            <option key={v} value={v}>{label}</option>
+          {EVENT_TYPES.map((v) => (
+            <option key={v} value={v}>
+              {t(`type.${v}` as MessageKey)}
+            </option>
           ))}
         </select>
       </Field>
 
-      <Field label="Event name(s)">
+      <Field label={t("form.eventName")}>
         <input
           className={inputCls}
-          placeholder="Danielle & Omer"
+          placeholder={t("form.eventNamePlaceholder")}
           required
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -107,7 +93,7 @@ export default function CheckoutForm() {
       </Field>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Event date">
+        <Field label={t("form.eventDate")}>
           <input
             type="date"
             className={inputCls}
@@ -116,11 +102,11 @@ export default function CheckoutForm() {
             onChange={(e) => setForm({ ...form, eventDate: e.target.value })}
           />
         </Field>
-        <Field label="Contact phone">
+        <Field label={t("form.phone")}>
           <input
             type="tel"
             className={inputCls}
-            placeholder="050-1234567"
+            placeholder={t("form.phonePlaceholder")}
             required
             value={form.hostPhone}
             onChange={(e) => setForm({ ...form, hostPhone: e.target.value })}
@@ -128,20 +114,20 @@ export default function CheckoutForm() {
         </Field>
       </div>
 
-      <Field label="Email">
+      <Field label={t("form.email")}>
         <input
           type="email"
           className={inputCls}
-          placeholder="you@example.com"
+          placeholder={t("form.emailPlaceholder")}
           required
           value={form.hostEmail}
           onChange={(e) => setForm({ ...form, hostEmail: e.target.value })}
         />
       </Field>
 
-      <Field label="Theme">
+      <Field label={t("form.theme")}>
         <div className="flex flex-wrap gap-2">
-          {THEMES.map(([v, label]) => (
+          {THEMES.map((v) => (
             <button
               type="button"
               key={v}
@@ -152,30 +138,30 @@ export default function CheckoutForm() {
                   : "border-neutral-300 text-neutral-600 hover:border-brand-400"
               }`}
             >
-              {label}
+              {t(`theme.${v}` as MessageKey)}
             </button>
           ))}
         </div>
       </Field>
 
-      <Field label="Package">
+      <Field label={t("form.package")}>
         <div className="grid gap-3 sm:grid-cols-2">
           {PACKAGES.map((p) => (
             <button
               type="button"
               key={p.id}
               onClick={() => setForm({ ...form, packageType: p.id })}
-              className={`rounded-xl border p-4 text-left transition ${
+              className={`rounded-xl border p-4 text-start transition ${
                 form.packageType === p.id
                   ? "border-brand-600 bg-brand-50 ring-2 ring-brand-600"
                   : "border-neutral-200 hover:border-brand-300"
               }`}
             >
               <div className="flex items-baseline justify-between">
-                <span className="font-bold">{p.title}</span>
+                <span className="font-bold">{t(`pkg.${p.id}.title` as MessageKey)}</span>
                 <span className="text-lg font-bold text-brand-700">{p.price}</span>
               </div>
-              <p className="mt-1 text-xs text-neutral-500">{p.desc}</p>
+              <p className="mt-1 text-xs text-neutral-500">{t(`pkg.${p.id}.desc` as MessageKey)}</p>
             </button>
           ))}
         </div>
@@ -188,11 +174,9 @@ export default function CheckoutForm() {
         disabled={busy}
         className="w-full rounded-xl bg-brand-600 py-3.5 font-bold text-white transition hover:bg-brand-700 disabled:opacity-50"
       >
-        {busy ? "Creating your event…" : "Continue to payment →"}
+        {busy ? t("form.submitting") : t("form.submit")}
       </button>
-      <p className="text-center text-xs text-neutral-400">
-        Secure checkout · Credit card & Apple Pay via Israeli payment gateway
-      </p>
+      <p className="text-center text-xs text-neutral-400">{t("form.secureNote")}</p>
     </form>
   );
 }
@@ -213,7 +197,7 @@ function LinkRow({ label, href }: { label: string; href: string }) {
   return (
     <li className="flex flex-col gap-0.5">
       <span className="font-medium text-green-900">{label}</span>
-      <a href={href} className="break-all text-brand-700 underline" target="_blank" rel="noreferrer">
+      <a href={href} className="break-all text-brand-700 underline" target="_blank" rel="noreferrer" dir="ltr">
         {typeof window !== "undefined" ? window.location.origin : ""}{href}
       </a>
     </li>

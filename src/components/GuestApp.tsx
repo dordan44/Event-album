@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { compressImage, MAX_VIDEO_BYTES } from "@/lib/compressImage";
 import { useEventSocket } from "@/lib/useEventSocket";
+import { LangToggle, useLang } from "@/lib/i18n";
 
 interface GuestEvent {
   id: string;
@@ -29,6 +30,7 @@ const THEME_BG: Record<string, string> = {
 };
 
 export default function GuestApp({ event }: { event: GuestEvent }) {
+  const { t } = useLang();
   const [guestName, setGuestName] = useState("");
   const [entered, setEntered] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
@@ -76,8 +78,8 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
     let ext = file.name.split(".").pop()?.toLowerCase() || "bin";
 
     if (isVideo) {
-      if (!event.allowVideo) throw new Error("סרטונים זמינים בחבילת פרימיום בלבד");
-      if (file.size > MAX_VIDEO_BYTES) throw new Error("סרטון גדול מדי (עד 100MB)");
+      if (!event.allowVideo) throw new Error(t("guest.errVideoPremium"));
+      if (file.size > MAX_VIDEO_BYTES) throw new Error(t("guest.errVideoSize"));
     } else {
       // Client-side processing: downscale to 1200px, re-encode to WebP (~500KB).
       const compressed = await compressImage(file);
@@ -95,7 +97,7 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
       body: JSON.stringify({ contentType, ext }),
     });
     const presign = await presignRes.json();
-    if (!presignRes.ok) throw new Error(presign.error ?? "שגיאה בהעלאה");
+    if (!presignRes.ok) throw new Error(presign.error ?? t("guest.errUpload"));
 
     // 2. Upload straight to R2 (or the local dev endpoint).
     const putRes = await fetch(presign.uploadUrl, {
@@ -103,7 +105,7 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
       headers: { "Content-Type": contentType },
       body: blob,
     });
-    if (!putRes.ok) throw new Error("ההעלאה נכשלה, נסו שוב");
+    if (!putRes.ok) throw new Error(t("guest.errUpload"));
 
     // 3. Confirm — creates the PENDING media record + real-time admin alert.
     const confirmRes = await fetch(`/api/events/${event.slug}/media`, {
@@ -116,7 +118,7 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
         sizeBytes: blob.size,
       }),
     });
-    if (!confirmRes.ok) throw new Error("שגיאה בשמירה, נסו שוב");
+    if (!confirmRes.ok) throw new Error(t("guest.errSave"));
 
     setUploads((u) => u.map((it) => (it.id === id ? { ...it, state: "done" } : it)));
   }
@@ -126,23 +128,26 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
   const subtext = dark ? "text-slate-300" : "text-neutral-500";
 
   return (
-    <main dir="rtl" className={`min-h-screen bg-gradient-to-b ${bg} ${text}`}>
+    <main className={`min-h-screen bg-gradient-to-b ${bg} ${text}`}>
       <div className="mx-auto max-w-md px-5 py-10">
+        <div className="mb-4 flex justify-end">
+          <LangToggle />
+        </div>
         {/* Brandable banner */}
         <header className="mb-8 text-center">
           <p className={`text-xs uppercase tracking-widest ${subtext}`}>SnapEvent</p>
           <h1 className="mt-1 font-display text-3xl font-bold">{event.name}</h1>
-          <p className={`mt-1 text-sm ${subtext}`}>שתפו אותנו ברגעים שלכם 📸</p>
+          <p className={`mt-1 text-sm ${subtext}`}>{t("guest.tagline")}</p>
         </header>
 
         {!entered ? (
           <form onSubmit={enter} className="animate-slide-up space-y-4">
             <label className="block">
-              <span className={`mb-1.5 block text-sm font-medium ${subtext}`}>השם שלך</span>
+              <span className={`mb-1.5 block text-sm font-medium ${subtext}`}>{t("guest.yourName")}</span>
               <input
                 autoFocus
                 className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-lg text-neutral-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                placeholder="למשל: דנה לוי"
+                placeholder={t("guest.namePlaceholder")}
                 value={guestName}
                 maxLength={60}
                 onChange={(e) => setGuestName(e.target.value)}
@@ -152,10 +157,10 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
               type="submit"
               className="w-full rounded-xl bg-brand-600 py-3.5 text-lg font-bold text-white transition active:scale-[0.98]"
             >
-              כניסה
+              {t("guest.enter")}
             </button>
             <p className={`text-center text-xs ${subtext}`}>
-              בלי הרשמה, בלי אפליקציה — רק השם שלך כדי שנדע למי להגיד תודה 🙏
+              {t("guest.noSignup")}
             </p>
           </form>
         ) : (
@@ -165,9 +170,9 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
               className="flex w-full flex-col items-center gap-2 rounded-2xl bg-brand-600 py-8 text-white shadow-lg transition active:scale-[0.98]"
             >
               <span className="text-4xl">📷</span>
-              <span className="text-xl font-bold">שתפו את הרגעים שלכם</span>
+              <span className="text-xl font-bold">{t("guest.share")}</span>
               <span className="text-xs opacity-80">
-                {event.allowVideo ? "תמונות וסרטונים — אפשר לבחור כמה ביחד" : "תמונות — אפשר לבחור כמה ביחד"}
+                {event.allowVideo ? t("guest.pickPhotosVideos") : t("guest.pickPhotos")}
               </span>
             </button>
             <input
@@ -196,10 +201,10 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
             )}
 
             <p className={`text-center text-xs ${subtext}`}>
-              התמונות שלכם יופיעו באלבום (ועל המסך!) אחרי אישור המארחים ✨
+              {t("guest.pendingNote")}
             </p>
             <p className={`text-center text-xs ${subtext}`}>
-              מחובר/ת בתור <b>{guestName}</b> ·{" "}
+              {t("guest.connectedAs")} <b>{guestName}</b> ·{" "}
               <button
                 className="underline"
                 onClick={() => {
@@ -207,7 +212,7 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
                   setEntered(false);
                 }}
               >
-                החלפת שם
+                {t("guest.changeName")}
               </button>
             </p>
           </div>
@@ -218,14 +223,15 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
 }
 
 function StatusBadge({ state, error }: { state: UploadState; error?: string }) {
+  const { t } = useLang();
   switch (state) {
     case "compressing":
-      return <span className="text-amber-500">מכווץ…</span>;
+      return <span className="text-amber-500">{t("guest.compressing")}</span>;
     case "uploading":
-      return <span className="text-blue-500">מעלה…</span>;
+      return <span className="text-blue-500">{t("guest.uploading")}</span>;
     case "done":
-      return <span className="font-bold text-green-600">הועלה ✓ ממתין לאישור</span>;
+      return <span className="font-bold text-green-600">{t("guest.done")}</span>;
     case "error":
-      return <span className="text-red-500">{error ?? "שגיאה"}</span>;
+      return <span className="text-red-500">{error ?? t("guest.error")}</span>;
   }
 }

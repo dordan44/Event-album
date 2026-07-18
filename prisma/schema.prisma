@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum EventType {
+  WEDDING
+  BAR_MITZVAH
+  BAT_MITZVAH
+  BRIT
+  BIRTHDAY
+  CORPORATE
+}
+
+enum MediaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model Event {
+  id            String        @id @default(uuid())
+  slug          String        @unique // E.g., danielle-and-omer-2026
+  name          String
+  type          EventType
+  eventDate     DateTime
+  hostEmail     String
+  hostPhone     String
+  packageType   String        @default("BASIC") // BASIC, PREMIUM, VIP
+  theme         String        @default("classic") // classic, romance, night, festive
+  // Secret token gating the private admin dashboard (sent to the host on checkout)
+  adminToken    String        @unique @default(uuid())
+  paymentStatus PaymentStatus @default(PENDING)
+  // Google OAuth refresh token for 1-click Drive/Photos sync (set after host connects)
+  googleRefreshToken String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  media         Media[]
+
+  @@index([slug])
+}
+
+model Media {
+  id         String      @id @default(uuid())
+  eventId    String
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  storageKey String // Cloudflare R2 path: events/<eventId>/<filename>.webp
+  guestName  String
+  status     MediaStatus @default(PENDING)
+  type       MediaType   @default(IMAGE)
+  sizeBytes  Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  @@index([eventId, status]) // Crucial index for the real-time slideshow and admin dashboard query
+}

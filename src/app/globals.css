@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-white text-neutral-900 antialiased;
+}
+
+/* Slideshow crossfade */
+.slideshow-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out, transform 6s ease-out;
+  transform: scale(1.02);
+}
+.slideshow-img.active {
+  opacity: 1;
+  transform: scale(1.06); /* subtle Ken Burns drift */
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

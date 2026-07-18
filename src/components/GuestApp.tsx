@@ -113,9 +113,12 @@ export default function GuestApp({ event }: { event: GuestEvent }) {
         body: blob,
       });
     } catch {
-      throw new Error(t("guest.errUpload"));
+      // Network/CORS-blocked (browser rejects before any response)
+      throw new Error(`${t("guest.errUpload")} (net)`);
     }
-    if (!putRes.ok) throw new Error(t("guest.errUpload"));
+    // Storage answered but refused — the status code identifies why
+    // (403 = signature/credentials, 404 = bucket, 4xx/5xx = other)
+    if (!putRes.ok) throw new Error(`${t("guest.errUpload")} (${putRes.status})`);
 
     // 3. Confirm — creates the PENDING media record + real-time admin alert.
     const confirmRes = await fetch(`/api/events/${event.slug}/media`, {

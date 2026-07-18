@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { normalizeSlug } from "@/lib/slug";
 import { mediaUrl } from "@/lib/r2";
 import { emitToEvent } from "@/lib/realtime";
 import { requireEventAdmin } from "@/lib/auth";
@@ -17,7 +18,7 @@ export async function POST(
 ) {
   const params = await ctx.params;
   const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
+    where: { slug: normalizeSlug(params.slug) },
     select: { id: true, paymentStatus: true },
   });
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -78,7 +79,7 @@ export async function GET(
 
   if (status === "APPROVED") {
     const event = await prisma.event.findUnique({
-      where: { slug: params.slug },
+      where: { slug: normalizeSlug(params.slug) },
       select: { id: true },
     });
     if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -57,7 +57,8 @@ export async function GET(
   return new NextResponse(Readable.toWeb(out) as unknown as ReadableStream, {
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="snapevent-${event.slug}.zip"`,
+      // Headers are Latin-1 only; Hebrew slugs go in the RFC 5987 filename*
+      "Content-Disposition": `attachment; filename="snapevent-album.zip"; filename*=UTF-8''${encodeURIComponent(`snapevent-${event.slug}.zip`)}`,
     },
   });
 }

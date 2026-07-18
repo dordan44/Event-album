@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "./prisma";
+import { normalizeSlug } from "./slug";
 
 /**
  * Admin access to an event is gated by the event's secret adminToken,
@@ -14,7 +15,7 @@ export function extractAdminKey(req: NextRequest): string | null {
 }
 
 export async function requireEventAdmin(req: NextRequest, slug: string) {
-  const event = await prisma.event.findUnique({ where: { slug } });
+  const event = await prisma.event.findUnique({ where: { slug: normalizeSlug(slug) } });
   if (!event) return { event: null, authorized: false as const };
   const key = extractAdminKey(req);
   return { event, authorized: Boolean(key && key === event.adminToken) };

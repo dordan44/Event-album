@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { normalizeSlug } from "@/lib/slug";
 import Slideshow from "@/components/Slideshow";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function SlideshowPage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
   const params = await paramsPromise;
   const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
+    where: { slug: normalizeSlug(params.slug) },
     select: { id: true, slug: true, packageType: true, paymentStatus: true },
   });
   if (!event || event.paymentStatus !== "PAID") notFound();

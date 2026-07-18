@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { normalizeSlug } from "@/lib/slug";
 import { presignUpload, r2Configured } from "@/lib/r2";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export async function POST(
 ) {
   const params = await ctx.params;
   const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
+    where: { slug: normalizeSlug(params.slug) },
     select: { id: true, paymentStatus: true, packageType: true },
   });
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });

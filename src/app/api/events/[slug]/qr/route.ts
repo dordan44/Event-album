@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
+import { normalizeSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +16,15 @@ export async function GET(
 ) {
   const params = await ctx.params;
   const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
+    where: { slug: normalizeSlug(params.slug) },
     select: { slug: true },
   });
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const size = Math.min(2400, Math.max(120, Number(req.nextUrl.searchParams.get("size")) || 600));
   const origin = process.env.APP_URL || req.nextUrl.origin;
-  const guestUrl = `${origin}/events/${event.slug}`;
+  // Percent-encode so QR scanners always recognize it as a URL (slugs may be Hebrew)
+  const guestUrl = `${origin}/events/${encodeURIComponent(event.slug)}`;
 
   const png = await QRCode.toBuffer(guestUrl, {
     type: "png",
@@ -35,7 +37,8 @@ export async function GET(
   return new NextResponse(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",
-      "Content-Disposition": `inline; filename="snapevent-qr-${event.slug}.png"`,
+      // Headers are Latin-1 only; Hebrew slugs go in the RFC 5987 filename*
+      "Content-Disposition": `inline; filename="snapevent-qr.png"; filename*=UTF-8''${encodeURIComponent(`snapevent-qr-${event.slug}.png`)}`,
       "Cache-Control": "public, max-age=3600",
     },
   });

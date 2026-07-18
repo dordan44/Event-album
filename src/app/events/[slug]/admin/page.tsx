@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { normalizeSlug } from "@/lib/slug";
 import AdminDashboard from "@/components/AdminDashboard";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export default async function AdminPage(props: {
 }) {
   const [params, searchParams] = await Promise.all([props.params, props.searchParams]);
   const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
+    where: { slug: normalizeSlug(params.slug) },
     select: { id: true, slug: true, name: true, adminToken: true, googleRefreshToken: true },
   });
   if (!event) notFound();

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { createHash } from "crypto";
 import { prisma } from "./prisma";
 import { normalizeSlug } from "./slug";
 
@@ -19,4 +20,9 @@ export async function requireEventAdmin(req: NextRequest, slug: string) {
   if (!event) return { event: null, authorized: false as const };
   const key = extractAdminKey(req);
   return { event, authorized: Boolean(key && key === event.adminToken) };
+}
+
+/** Salted hash for dashboard sign-in codes stored in LoginCode. */
+export function hashLoginCode(email: string, code: string): string {
+  return createHash("sha256").update(`${email}:${code}`).digest("hex");
 }

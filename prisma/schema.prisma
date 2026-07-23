@@ -69,3 +69,16 @@ model Media {
 
   @@index([eventId, status]) // Crucial index for the real-time slideshow and admin dashboard query
 }
+
+// One-time 6-digit login codes for the host dashboard (magic-code auth).
+// Codes are stored hashed, expire after 10 minutes, and are deleted on use.
+model LoginCode {
+  id        String   @id @default(uuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

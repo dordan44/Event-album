@@ -15,6 +15,7 @@ interface CreatedEvent {
   guestUrl: string;
   adminUrl: string;
   slideshowUrl: string;
+  emailSent: boolean;
 }
 
 export default function CheckoutForm() {
@@ -62,6 +63,15 @@ export default function CheckoutForm() {
           <LinkRow label={t("created.guest")} href={created.guestUrl} />
           <LinkRow label={t("created.slideshow")} href={created.slideshowUrl} />
         </ul>
+        <div className="mt-6 border-t border-green-200 pt-4 text-sm text-green-800">
+          {created.emailSent && <p className="mb-1">{t("created.emailed")}</p>}
+          <p>
+            {t("created.dashboardNote")}{" "}
+            <a href="/dashboard" className="font-bold underline">
+              {t("created.dashboardLink")}
+            </a>
+          </p>
+        </div>
       </div>
     );
   }

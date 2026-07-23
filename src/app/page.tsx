@@ -11,6 +11,14 @@ export default function LandingPage() {
       <div className="fixed left-4 top-4 z-30">
         <LangToggle />
       </div>
+      <div className="fixed right-4 top-4 z-30">
+        <a
+          href="/dashboard"
+          className="rounded-full border border-neutral-300 bg-white/80 px-3 py-1 text-xs font-bold text-neutral-600 shadow-sm backdrop-blur transition hover:border-brand-400"
+        >
+          {t("landing.myEvents")}
+        </a>
+      </div>
 
       {/* Hero */}
       <header className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">

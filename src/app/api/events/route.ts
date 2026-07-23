@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
+import { sendEmail, eventCreatedEmail } from "@/lib/email";
 import { EventType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,8 @@ export async function POST(req: NextRequest) {
       name,
       type,
       eventDate: date,
-      hostEmail,
+      // Lowercased so dashboard sign-in (keyed by verified email) matches.
+      hostEmail: hostEmail.trim().toLowerCase(),
       hostPhone,
       packageType: pkg,
       theme: chosenTheme,
@@ -58,14 +60,35 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  const guestUrl = `/events/${event.slug}`;
+  const adminUrl = `/events/${event.slug}/admin?key=${event.adminToken}`;
+  const slideshowUrl = `/events/${event.slug}/slideshow`;
+
+  // Email the host their links so a closed tab never strands them.
+  // Never blocks checkout — the dashboard remains the fallback.
+  const origin = process.env.APP_URL || req.nextUrl.origin;
+  const tpl = eventCreatedEmail({
+    eventName: event.name,
+    adminUrl: `${origin}${adminUrl}`,
+    guestUrl: `${origin}${guestUrl}`,
+    slideshowUrl: `${origin}${slideshowUrl}`,
+    dashboardUrl: `${origin}/dashboard`,
+  });
+  const emailResult = await sendEmail({
+    to: event.hostEmail,
+    subject: tpl.subject,
+    html: tpl.html,
+  });
+
   return NextResponse.json(
     {
       id: event.id,
       slug: event.slug,
-      guestUrl: `/events/${event.slug}`,
-      adminUrl: `/events/${event.slug}/admin?key=${event.adminToken}`,
-      slideshowUrl: `/events/${event.slug}/slideshow`,
+      guestUrl,
+      adminUrl,
+      slideshowUrl,
       paymentStatus: event.paymentStatus,
+      emailSent: emailResult.sent,
     },
     { status: 201 }
   );

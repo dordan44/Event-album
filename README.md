@@ -22,8 +22,14 @@ hosts moderate live, and approved photos appear instantly on the venue screen.
 | Guest upload app (Hebrew, RTL) | `/events/[slug]` | Guests, via table QR |
 | Admin dashboard | `/events/[slug]/admin?key=ADMIN_TOKEN` | Host / designated moderator |
 | Venue slideshow | `/events/[slug]/slideshow` | DJ / AV screen |
+| Host dashboard | `/dashboard` | Host (passwordless email sign-in) |
 
 Plus: `/` (marketing + checkout) and `/events/[slug]/sign` (print-ready A5 table sign).
+
+The host's links are emailed at checkout, and `/dashboard` lists every event created
+with a verified email address (6-digit emailed code → 30-day signed session cookie) —
+so a closed tab never strands a host. The `?key=` admin link remains the way to hand
+moderation to someone else (a bridesmaid, the DJ).
 
 ## Real-time flow
 
@@ -62,3 +68,7 @@ upload, moderation, slideshow, ZIP export — works locally.
   provider, redirect to its hosted page and flip `paymentStatus` in the S2S callback.
 - **Google Drive sync**: fully implemented (`drive.file` scope) — just supply
   `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` with redirect URI `{APP_URL}/api/google/callback`.
+- **Email** (Resend): link-delivery and sign-in-code emails are sent when
+  `RESEND_API_KEY` is set; without it they are logged to the console and the dashboard
+  login returns the code in the API response (outside production) for local testing.
+  Set `SESSION_SECRET` in production for the dashboard session cookie.

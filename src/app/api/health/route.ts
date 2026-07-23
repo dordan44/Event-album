@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { prisma } from "@/lib/prisma";
-import { presignUpload, r2Configured } from "@/lib/r2";
+import { presignUpload, r2Configured, r2Endpoint } from "@/lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     R2_ACCESS_KEY_ID: Boolean(process.env.R2_ACCESS_KEY_ID),
     R2_SECRET_ACCESS_KEY: Boolean(process.env.R2_SECRET_ACCESS_KEY),
     R2_BUCKET: Boolean(process.env.R2_BUCKET),
+    R2_JURISDICTION: process.env.R2_JURISDICTION || null,
     R2_PUBLIC_BASE_URL: Boolean(process.env.R2_PUBLIC_BASE_URL),
   };
 
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
     try {
       const client = new S3Client({
         region: "auto",
-        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        endpoint: r2Endpoint(),
         credentials: {
           accessKeyId: process.env.R2_ACCESS_KEY_ID!,
           secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,

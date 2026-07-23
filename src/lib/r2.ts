@@ -24,13 +24,26 @@ export function r2Configured(): boolean {
   );
 }
 
+/**
+ * Buckets created under a jurisdiction (e.g. "eu") are ONLY reachable via
+ * the jurisdiction-specific endpoint — the default endpoint answers
+ * NoSuchBucket for them.
+ */
+export function r2Endpoint(): string {
+  const jurisdiction = process.env.R2_JURISDICTION?.trim().toLowerCase();
+  const host = jurisdiction
+    ? `${process.env.R2_ACCOUNT_ID}.${jurisdiction}.r2.cloudflarestorage.com`
+    : `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  return `https://${host}`;
+}
+
 let _client: S3Client | null = null;
 
 function client(): S3Client {
   if (!_client) {
     _client = new S3Client({
       region: "auto",
-      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: r2Endpoint(),
       credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID!,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
